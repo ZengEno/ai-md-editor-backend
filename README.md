@@ -44,11 +44,11 @@ This command will install the dependencies and create a virtual environment for 
 
 This will start the FastAPI server, and you can access the API documentation by navigating to http://localhost:8080/docs in your browser.
 
-**Note**: Ensure that the frontend service is running simultaneously to use this backend service effectively.
+**Note**: Ensure that the frontend and database service is running simultaneously to use this backend service effectively.
 
 ## Usage
 
-To use the backend service, you should start the frontend service and open the editor in the browser.
+To use the backend service, you should start the frontend service and open the editor in the browser. And also make sure the database is running.
 
 ## License
 
