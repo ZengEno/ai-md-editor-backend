@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import status
-from motor.motor_asyncio import AsyncIOMotorCollection
+from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from database.db_classes import UserProfile
 from database.db import db
@@ -41,16 +41,17 @@ async def fetch_user_profile(identifier: str):
 # Get the next registration counts
 
 
-async def registration_counter(server_data_collection):
-    counter_doc = await server_data_collection.find_one_and_update(
-        {'_id': 'registration_counter'},
-        {'$inc': {'seq': 1}},
-        upsert=True,
+async def registration_counter(db: AsyncIOMotorDatabase):
+    counter_doc = await db.app_statistics.find_one_and_update(
+        {'name': 'registration_count'},
+        {'$inc': {'value': 1}},
         return_document=True
     )
-    # Ensure it returns 1 if newly created
-    registration_number = counter_doc['seq'] if counter_doc else 1
-    return registration_number
+    
+    if counter_doc is None:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get registration count")
+    
+    return counter_doc['value']
 
 
 def create_jwt_token(data: dict, expire_delta: timedelta, is_refresh: bool = False):

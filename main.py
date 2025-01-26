@@ -5,15 +5,33 @@ import dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from contextlib import asynccontextmanager
 
 from routers.auth import auth_router
 from routers.agent import agent_router
 from routers.chat import chat_router
+from database.db import client
 
 # this is used to set up the environment variables
-dotenv.load_dotenv()
+dotenv.load_dotenv(override=True)
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # this will be run when start the app
+    try:
+        await client.admin.command('ping')
+        print('    MongoDB connected successfully!')
+    except Exception as e:
+        print(f"    Failed to connect to MongoDB: {e}")
+
+    # yield the app (run the app)
+    yield
+
+    # this will be run when shutdown the app
+    print("    Shutting down MongoDB connection...")
+
+
+app = FastAPI(lifespan=lifespan)
 app.include_router(auth_router)
 app.include_router(agent_router, prefix='/agent')
 app.include_router(chat_router, prefix='/chat')

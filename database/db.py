@@ -3,7 +3,7 @@ from motor import motor_asyncio
 
 
 client = motor_asyncio.AsyncIOMotorClient(os.getenv('mongodb_connection_string'))
-db = client.AI_Article_Editor_DB
+db = client.ai_md_editor_db
 
 
 # run the following code to initiate the database

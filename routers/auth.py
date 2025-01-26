@@ -34,7 +34,7 @@ async def register_user(register_request: RegisterRequest):
 
     # 2. 创建用户
     user_profile = UserProfile(
-        user_id=generate_user_id(await registration_counter(db.server_data)),
+        user_id=generate_user_id(await registration_counter(db)),
         user_nickname=register_request.user_nickname,
         email=register_request.email,
         hashed_password=pwd_context.hash(register_request.password),

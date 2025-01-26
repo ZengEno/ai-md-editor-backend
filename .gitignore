@@ -69,3 +69,7 @@ dmypy.json
 
 # macOS .DS_Store files
 .DS_Store
+
+# other files
+test.py
+test_note.ipynb
