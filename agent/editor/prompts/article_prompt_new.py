@@ -38,7 +38,7 @@ def current_article_prompt(article: Article, highlight_data: HighlightData):
 {article.file_name}
 </current_article_file_name>
         
-Below is the article content the user is working on, be aware that each line is wrapped in <line_i> tags.
+Below is the article content the user is working on, be aware that each line is wrapped in <line_i> and </line_i> tags.
 <current_article_content>
 {formatted_article_by_lines}
 </current_article_content>
