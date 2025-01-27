@@ -143,7 +143,7 @@ async def reply_cot(state: EditorGraphState):
                                     reference_articles_prompt=reference_articles_prompt(state.reference_articles),
                                     formatted_reflections=formatted_reflections)
     
-    llm = get_llm(llm=state.assistant_data.llm_provider, size="small", temperature=0)
+    llm = get_llm(llm=state.assistant_data.llm_provider, model='qwen-turbo', temperature=0)
     llm_tools = llm.bind_tools([edit_article_tool])
 
     input_messages = [SystemMessage(system_prompt)] + state.messages

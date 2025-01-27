@@ -37,7 +37,7 @@ async def reflect(state: ReflectionGraphState):
         The input variable general_facts should be the complete new list of memories/facts about the user.'''
         return Reflections(style_guidelines=style_guidelines, general_facts=general_facts)
     
-    llm = get_llm(llm="qwen", size="small", temperature=0)
+    llm = get_llm(llm="qwen", model='qwen-turbo', temperature=0)
     llm_tools = llm.bind_tools(tools=[generate_reflections], tool_choice="generate_reflections")
 
     formatted_system_prompt = REFLECT_SYSTEM_PROMPT.format(article=article_as_string, reflections=formatted_reflections)

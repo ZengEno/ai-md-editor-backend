@@ -41,7 +41,7 @@ async def reply_to_general_input(state: EditorGraphState):
                                                     formatted_reflections=formatted_reflections)
  
 
-    llm = get_llm(llm=state.assistant_data.llm_provider, size="small", temperature=0)
+    llm = get_llm(llm=state.assistant_data.llm_provider, model='qwen-turbo', temperature=0)
 
     input_messages = [SystemMessage(system_prompt)] + state.messages
 

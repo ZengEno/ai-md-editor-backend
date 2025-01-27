@@ -87,7 +87,7 @@ async def think(state: EditorGraphState):
                                     reference_articles_prompt=reference_articles_prompt(state.reference_articles),
                                     formatted_reflections=formatted_reflections)
     
-    llm = get_llm(llm='ollama', size="small", temperature=0.5)
+    llm = get_llm(llm='deepseek', model='deepseek-reasoner', temperature=0.5)
 
     input_messages = [SystemMessage(system_prompt)] + state.messages
 
