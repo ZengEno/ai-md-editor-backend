@@ -27,8 +27,7 @@ class EditorGraphState(BaseModel):
     other_articles: list[Article] | None = None
     reference_articles: list[Article] | None = None
 
-    edit_article_tool_call: dict | None = None
-    
+    think_content: str | None = None
 
     # The language to translate the artifact to.
     language: language_options | None = None

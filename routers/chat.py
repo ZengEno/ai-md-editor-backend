@@ -29,6 +29,7 @@ class ChatResponse(BaseModel):
     assistant_id: str
     role: str
     content: str
+    think_content: str
     edited_article: str
     edited_article_related_to: str
     other_data: dict
@@ -67,12 +68,14 @@ async def chat_with_agent(chat_request: ChatRequest,
         all_states.append(output)
 
     response_content = all_states[-1]['messages'][-1].content
+    think_content = all_states[-1]['think_content'] if 'think_content' in all_states[-1] else ''
     edited_article = all_states[-1]['edited_article'] if 'edited_article' in all_states[-1] else ''
     edited_article_related_to = all_states[-1]['edited_article_related_to'] if 'edited_article_related_to' in all_states[-1] else ''
-
+    
     return ChatResponse(assistant_id=chat_request.assistant_id,
                                 role="assistant",
                                 content=response_content,
+                                think_content=think_content,
                                 edited_article=edited_article,
                                 edited_article_related_to=edited_article_related_to,
                                 other_data={})

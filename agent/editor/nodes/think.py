@@ -1,3 +1,4 @@
+import re
 from langchain_core.messages import SystemMessage, AIMessage
 
 from ...ai_models import get_llm
@@ -40,23 +41,22 @@ And if you want to delete line 2, you should wrap an empty line in the tags like
 </edited_content>
 
 And if you want to insert a new line, you need to think about where to insert it. 
-You should wrap the content of new line in tags with the line number of the line you want to insert after, and then an extention.
-The extension should be a dot following by the new line number, counting from 1.
-For example, if you want to insert a new line after line 2, you should wrap the content of new line in tags like this:
+If you want to insert some content after a line, you can add a newline character after the content of the line, and then add the new content.
+For example, if you want to insert a new line after line 2, you can do this:
 <edited_content>
-<line_2.1>This is a new line after line 2.</line_2.1>
+<line_2>This is another line in the article.\nThis is a new line after line 2.</line_2>
 </edited_content>
 
-If you want to insert a new line at the beginning of the article (before line 1), you should wrap the content of new line in tags like this:
+Similarly, if you want to insert a new line before a line, you can add the new content followed by a newline character before the content of the line. 
+This is useful when you want to insert a new line at the beginning of the article (before line 1), like this:
 <edited_content>
-<line_0.1>This is a new line at the beginning of the article.</line_0.1>
+<line_1>This is a new line at the beginning of the article.\nThis is a line in the article.</line_1>
 </edited_content>
 
 And you can edit multiple lines at once, for example, if you want to edit line 1 and line 2, you should wrap the edited content in tags like this:
 <edited_content>
 <line_1>This is the edited line 1.</line_1>
-<line_2>This is the edited line 2.</line_2>
-<line_2.1>This is a new line after line 2.</line_2.1>
+<line_2>This is the edited line 2.\nAnd this is a new line after line 2.</line_2>
 </edited_content>
 
 Typically, you don't need to repeat the lines that you don't edit, although you can if you want to.
@@ -75,6 +75,22 @@ You have the following reflections on style guidelines and general facts about t
 '''
 
 
+def parse_tag_content(ai_message: AIMessage):
+    if "<think>" not in ai_message.content or "</think>" not in ai_message.content:
+        return ai_message.content, '', ''
+        
+    think_content = ai_message.content.split("<think>")[1].split('</think>')[0].strip()
+
+    response_content = ai_message.content.split('</think>')[1].strip()
+    edited_content = ''
+
+    if '<edited_content>' in response_content and '</edited_content>' in response_content:
+        edited_content = response_content.split('<edited_content>')[1].split('</edited_content>')[0]
+        response_content = response_content.split('<edited_content>')[0] + '<edited_content></edited_content>' + response_content.split('</edited_content>')[1]
+
+    return response_content, think_content, edited_content
+
+
 async def think(state: EditorGraphState):
     assistant_data = state.assistant_data
     if not assistant_data:
@@ -87,10 +103,32 @@ async def think(state: EditorGraphState):
                                     reference_articles_prompt=reference_articles_prompt(state.reference_articles),
                                     formatted_reflections=formatted_reflections)
     
-    llm = get_llm(llm='deepseek', model='deepseek-reasoner', temperature=0.5)
+    llm = get_llm(llm='ollama', model='deepseek-r1:14b', temperature=0.5)
 
     input_messages = [SystemMessage(system_prompt)] + state.messages
 
     ai_message = await llm.ainvoke(input=input_messages)
 
-    return {"messages": ai_message}
+    response_content, think_content, edited_content = parse_tag_content(ai_message)
+
+    if edited_content:
+        # Regular expression to find content inside <line_i> tags
+        pattern = r'<line_(\d+)>(.*?)</line_\1>'
+        matches = re.findall(pattern, edited_content, re.DOTALL)
+
+        edited_article_by_lines = state.article.content.split('\n')
+        for key, value in matches:
+            edited_article_by_lines[int(key)-1] = value
+        
+        edited_article = '\n'.join(edited_article_by_lines)
+    else:
+        edited_article = ''
+        
+    edited_article_related_to = state.article.file_name if edited_article else ''
+
+    ai_message.content = response_content
+
+    return {"messages": ai_message,
+            "think_content": think_content,
+            "edited_article": edited_article,
+            "edited_article_related_to": edited_article_related_to}

@@ -10,9 +10,9 @@ async def routing(state: EditorGraphState):
         return {"messages": [], 
                 "next_node": "reply_to_general_input"}
     
-    next_node = "reply_with_edit"
+    next_node = "think"
 
-    if next_node == "reply_with_edit":
+    if next_node == "think":
         return {"messages": [], 
                 "next_node": next_node, 
                 "edited_article_related_to": state.article.file_name}
