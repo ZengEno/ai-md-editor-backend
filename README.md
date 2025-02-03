@@ -8,11 +8,10 @@ AI MD Editor (Backend) is the backend component of AI MD Editor, an AI agent-bas
 
 To get started with the AI MD Editor backend, follow these steps:
 
-1. Clone the repository:
+1. Navigate to the directory you want to save the project and clone the repository:
 
     ```bash
     git clone https://github.com/ZengEno/ai-md-editor-backend.git
-    cd ai-md-editor-backend
     ```
 
 2. This project uses poetry to manage dependencies. If you don't have poetry, you should install it first. You can search python poetry for installation instruction. 

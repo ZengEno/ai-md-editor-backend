@@ -2,6 +2,9 @@ import uvicorn
 import os
 import dotenv
 
+# this is used to set up the environment variables
+dotenv.load_dotenv(encoding='utf-8', override=True)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
@@ -12,8 +15,6 @@ from routers.agent import agent_router
 from routers.chat import chat_router
 from database.db import client
 
-# this is used to set up the environment variables
-dotenv.load_dotenv(override=True)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
