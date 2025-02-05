@@ -118,7 +118,11 @@ async def think(state: EditorGraphState):
 
         edited_article_by_lines = state.article.content.split('\n')
         for key, value in matches:
-            edited_article_by_lines[int(key)-1] = value
+            line_index = int(key) - 1
+            # Ensure the list is long enough
+            while len(edited_article_by_lines) <= line_index:
+                edited_article_by_lines.append('')  # Append empty lines if needed
+            edited_article_by_lines[line_index] = value
         
         edited_article = '\n'.join(edited_article_by_lines)
     else:
