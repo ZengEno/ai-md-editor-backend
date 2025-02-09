@@ -10,6 +10,7 @@ ENV/
 
 # Environment variables
 .env
+*.production
 
 # Distribution / packaging
 .Python
@@ -71,5 +72,9 @@ dmypy.json
 .DS_Store
 
 # other files
-test.py
-test_note.ipynb
+*.log
+*.test.py
+*.test.ipynb
+tests/
+
+docker-compose.yaml
