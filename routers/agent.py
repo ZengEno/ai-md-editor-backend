@@ -1,7 +1,7 @@
 import uuid
 from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, status
-from routers.auth_utils import validate_jwt_and_get_pyaload
+from routers.auth_utils import get_jwt_payload, oauth2_bearer
 from database.db import db
 from database.db_classes import AssistantData
 from agent.agent_classes import Reflections
@@ -11,7 +11,11 @@ agent_router = APIRouter(tags=["Agent Assistant"])
 
 
 @agent_router.post("/create")
-async def create_agent(assistant_name: str, llm_provider: Literal['qwen'], payload: dict = Depends(validate_jwt_and_get_pyaload)):
+async def create_agent(assistant_name: str, 
+                       llm_provider: Literal['qwen'], 
+                       jwt_token: str = Depends(oauth2_bearer)):
+    payload = get_jwt_payload(jwt_token=jwt_token)
+
     # 1. 检查用户是否存在
     user_id = payload['data']['user_id']
     existing_assistants = await db.assistant_data.find({"user_id": user_id}).to_list(length=None)
@@ -52,7 +56,9 @@ async def create_agent(assistant_name: str, llm_provider: Literal['qwen'], paylo
 
 
 @agent_router.post("/delete")
-async def delete_agent(assistant_id: str, payload: dict = Depends(validate_jwt_and_get_pyaload)):
+async def delete_agent(assistant_id: str, 
+                       jwt_token: str = Depends(oauth2_bearer)):
+    payload = get_jwt_payload(jwt_token=jwt_token)
     user_id = payload['data']['user_id']
     result = await db.assistant_data.delete_one({"assistant_id": assistant_id, "user_id": user_id})
     if result.deleted_count == 0:
@@ -62,7 +68,8 @@ async def delete_agent(assistant_id: str, payload: dict = Depends(validate_jwt_a
 
 
 @agent_router.get("/list")
-async def list_agents(payload: dict = Depends(validate_jwt_and_get_pyaload)):
+async def list_agents(jwt_token: str = Depends(oauth2_bearer)):
+    payload = get_jwt_payload(jwt_token=jwt_token)
     user_id = payload['data']['user_id']
     assistants = await db.assistant_data.find({"user_id": user_id}).to_list(length=None)
     if not assistants:
@@ -74,7 +81,9 @@ async def list_agents(payload: dict = Depends(validate_jwt_and_get_pyaload)):
 
 
 @agent_router.post("/update")
-async def update_agent(assistant_data: AssistantData, payload: dict = Depends(validate_jwt_and_get_pyaload)):
+async def update_agent(assistant_data: AssistantData, 
+                       jwt_token: str = Depends(oauth2_bearer)):
+    payload = get_jwt_payload(jwt_token=jwt_token)
     user_id = payload['data']['user_id']
     assistant_data.user_id = user_id
     assistant_id=assistant_data.assistant_id

@@ -67,9 +67,9 @@ def create_jwt_token(data: dict, expire_delta: timedelta, is_refresh: bool = Fal
     jwt_token = jwt.encode(payload.model_dump(),
                            key=SECRET_KEY, algorithm=ALGORITHM)
     return jwt_token, expiration_time
-
-
-def validate_jwt_and_get_pyaload(jwt_token: str = Depends(oauth2_bearer)):
+    
+    
+def get_jwt_payload(jwt_token: str):
     try:
         # validate jwt_token
         payload = jwt.decode(jwt_token, key=SECRET_KEY, algorithms=[ALGORITHM])
@@ -97,8 +97,9 @@ def validate_jwt_and_get_pyaload(jwt_token: str = Depends(oauth2_bearer)):
             headers={"WWW-Authenticate": "Bearer"})
 
 
-async def validate_jwt_and_fetch_user_profile(payload: dict = Depends(validate_jwt_and_get_pyaload),
-                                              jwt_token: str = Depends(oauth2_bearer)):
+async def validate_jwt_and_fetch_user_profile(jwt_token: str = Depends(oauth2_bearer)):
+    payload = get_jwt_payload(jwt_token)
+
     # fetch user profile
     user_profile = await fetch_user_profile(identifier=payload['data']['user_id'])
 
