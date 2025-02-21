@@ -14,127 +14,8 @@ class StreamResponse(BaseModel):
     content_chunk: str
     think_content_chunk: str
     edited_article_chunk: str
-    edited_article_related_to: str
-    other_data: dict
-
-
-
-# # Find the index of the tag in the chunk
-# def find_tag_index_in_chunk(chunk: str, tag: str):
-#     tag_found = False
-#     j=0
-#     for i in range(len(chunk)):
-#         if chunk[i] == tag[j]:
-#             tag_found = True
-#             j+=1
-#             if j == len(tag):
-#                 break
-#         else:
-#             tag_found = False
-#             j=0
-
-#     tag_index_start = None
-#     tag_index_end = None
-#     if tag_found:
-#         tag_index_start = i-j+1
-#         tag_index_end = i
-
-#     return tag_index_start, tag_index_end
-
-
-# # Stream the data to the client
-# async def send_stream_data(initial_state):
-#     # Initialize the stream data
-#     begin_tag = '<@edited_article>'
-#     end_tag = '</@edited_article>'
-
-#     updated_state = initial_state
-
-#     content_to_send = ''
-#     edited_article_to_send = ''
-#     temporary_chunk = ''
-#     streaming_edited_article = False
-
-#     data_to_send = StreamResponse(assistant_id=initial_state.assistant_data.assistant_id,
-#                                      assistant_status='thinking',
-#                                      role='assistant',
-#                                      content_chunk='',
-#                                      edited_article_chunk='',
-#                                      edited_article_related_to='',
-#                                      other_data={})
-#     yield f"data: {data_to_send.model_dump_json()}\n\n"
-
-#     try:
-#         async for event, chunk in editor_graph.astream(initial_state, stream_mode=["messages", "values"]):
-
-#             if event == 'values':
-#                 updated_state = chunk
-
-#             if event == 'messages':
-#                 if isinstance(chunk[0], AIMessageChunk):
-#                     temporary_chunk += chunk[0].content
-
-#                     # Check if we are streaming the edited article
-#                     if not streaming_edited_article:
-#                         tag = begin_tag
-#                     else:
-#                         tag = end_tag
-
-#                     # Find the tag in the temporary chunk
-#                     tag_index_start, tag_index_end = find_tag_index_in_chunk(temporary_chunk, tag)
-#                     if tag_index_start is None:
-#                         # If the tag is not found, add the temporary chunk to the content or edited article
-#                         if not streaming_edited_article:
-#                             content_to_send += temporary_chunk
-#                         else:
-#                             edited_article_to_send += temporary_chunk
-#                         temporary_chunk = ''
-
-#                     elif temporary_chunk[tag_index_start : tag_index_end+1] != tag:
-#                         # If just part of the tag is found, add the string before the tag to the content or edited article
-#                         if not streaming_edited_article:
-#                             content_to_send += temporary_chunk[0:tag_index_start]
-#                         else:
-#                             edited_article_to_send += temporary_chunk[0:tag_index_start]
-#                         temporary_chunk = temporary_chunk[tag_index_start:]
-
-#                     else:
-#                         # If the tag is found, toggle the streaming_edited_article flag
-#                         if not streaming_edited_article:
-#                             content_to_send += temporary_chunk[0:tag_index_start]
-#                         else:
-#                             edited_article_to_send += temporary_chunk[0:tag_index_start]
-                        
-#                         temporary_chunk = temporary_chunk[tag_index_end+1:]
-#                         content_to_send += tag
-#                         # toggle the streaming_edited_article flag
-#                         streaming_edited_article = not streaming_edited_article
-                    
-#             data_to_send = StreamResponse(assistant_id=initial_state.assistant_data.assistant_id,
-#                                      assistant_status='responding',
-#                                      role='assistant',
-#                                      content_chunk=content_to_send,
-#                                      edited_article_chunk=edited_article_to_send,
-#                                      edited_article_related_to=updated_state['article'].file_name,
-#                                      other_data={})
-#             # send the data to the client
-#             yield f"data: {data_to_send.model_dump_json()}\n\n"
-#             # clear the content and edited article after sending to prevent sending the same data again
-#             content_to_send = ''
-#             edited_article_to_send = ''
-
-        
-#     except Exception as e:
-#         yield f"data: {json.dumps({'error': str(e)})}\n\n"
-#         print(f"Unexpected error during stream generation: {e}")
-#     finally:
-#         yield f"data: [DONE]\n\n"
-
-
-
-
-
-
+    edited_article_related_to: str | None
+    other_data: dict | None
 
 
 
@@ -144,38 +25,33 @@ def process_text_chunk(text_chunk, target_tags, default_content, tag_contents, c
             if bracket_match:
                 text_inside_bracket = bracket_match.group(1)
 
-                if current_tag and text_inside_bracket == f"/{current_tag}":
-                    # 如果有current_tag, 且text_inside_bracket是current_tag的close tag
-                    tag_contents[current_tag] += text_chunk[:bracket_match.start()]
-                    text_chunk = text_chunk[bracket_match.end():]
-                    current_tag = None
-                    continue
-
-                # find if there's a new open tag in the chunk
-                if text_inside_bracket in target_tags:
-                    if current_tag:
+                if current_tag:
+                    if text_inside_bracket == f"/{current_tag}":
+                        # 如果有current_tag, 且text_inside_bracket是current_tag的close tag
                         tag_contents[current_tag] += text_chunk[:bracket_match.start()]
+                        text_chunk = text_chunk[bracket_match.end():]
+                        current_tag = None
                     else:
-                        default_content += text_chunk[:bracket_match.start()]
+                        # 如果有current_tag, 且text_inside_bracket不是current_tag的close tag
+                        tag_contents[current_tag] += text_chunk[:bracket_match.end()]
+                        text_chunk = text_chunk[bracket_match.end():]
+                elif text_inside_bracket in target_tags:
+                    # find if there's a new open tag in the chunk
+                    default_content += text_chunk[:bracket_match.start()]
                     text_chunk = text_chunk[bracket_match.end():]
                     current_tag = text_inside_bracket
 
-                    # add the newly opened tag to content_default
-                    default_content += f"<{text_inside_bracket}></{text_inside_bracket}>"
-                    continue
+                    # handle edited content tag specifically
+                    if text_inside_bracket == 'edited_content':
+                        default_content += f"<edited_content></edited_content>"
                 else:
-                    # the text_inside_bracket is not a target tag
-                    if current_tag:
-                        tag_contents[current_tag] += text_chunk[:bracket_match.end()]
-                    else:
-                        default_content += text_chunk[:bracket_match.end()]
+                    default_content += text_chunk[:bracket_match.end()]
                     text_chunk = text_chunk[bracket_match.end():]
-                    continue
             
             else:
                 # no bracket match
                 unfinished_bracket_match = re.search(r'<([^<>]*)$', text_chunk)
-                if unfinished_bracket_match and len(unfinished_bracket_match.group(1)) <= max(len(tag) for tag in target_tags):
+                if unfinished_bracket_match and len(unfinished_bracket_match.group(1)) <= (max(len(tag) for tag in target_tags) + 1):
                     chunk_leftover = text_chunk[unfinished_bracket_match.start():]
                     if current_tag:
                         tag_contents[current_tag] += text_chunk[:unfinished_bracket_match.start()]
@@ -199,7 +75,7 @@ async def run_graph_and_stream(current_state, websocket: WebSocket):
                                 content_chunk='',
                                 think_content_chunk='',
                                 edited_article_chunk='',
-                                edited_article_related_to='',
+                                edited_article_related_to=current_state.article.file_name,
                                 other_data={})
     await websocket.send_json(data_to_send.model_dump())
 
@@ -272,6 +148,6 @@ async def run_graph_and_stream(current_state, websocket: WebSocket):
                                     content_chunk='',
                                     think_content_chunk='',
                                     edited_article_chunk='',
-                                    edited_article_related_to='',
+                                    edited_article_related_to=current_state.article.file_name,
                                     other_data={})
         await websocket.send_json(data_to_send.model_dump())
