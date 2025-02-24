@@ -65,6 +65,8 @@ origins = [
     "http://localhost",
     "http://localhost:5173", # the frontend local development port
     "http://frontend:80", # the nginx port when running in docker
+    "https://frontend:80",
+    "https://enolearnai.com",
 ]
 
 app.add_middleware(

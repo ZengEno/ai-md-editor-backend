@@ -48,7 +48,7 @@ class AssistantData(BaseModel):
     assistant_id: str
 
     assistant_name: str
-    llm_provider: Literal['qwen']
+    llm_provider: Literal['qwen', 'deepseek-r1']
 
     reflections: Reflections
 

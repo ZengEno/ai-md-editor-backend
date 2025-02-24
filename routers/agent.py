@@ -12,7 +12,7 @@ agent_router = APIRouter(tags=["Agent Assistant"])
 
 @agent_router.post("/create")
 async def create_agent(assistant_name: str, 
-                       llm_provider: Literal['qwen'], 
+                       llm_provider: str, 
                        jwt_token: str = Depends(oauth2_bearer)):
     payload = get_jwt_payload(jwt_token=jwt_token)
 
