@@ -57,9 +57,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-app.include_router(auth_router, prefix='/api')
-app.include_router(agent_router, prefix='/api/agent')
-app.include_router(chat_router, prefix='/api/chat')
+app.include_router(auth_router)
+app.include_router(agent_router, prefix='/agent')
+app.include_router(chat_router, prefix='/chat')
 
 origins = [
     "http://localhost",
